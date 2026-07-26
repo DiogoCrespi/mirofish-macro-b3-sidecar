@@ -484,13 +484,18 @@ class ZepToolsService:
             SearchResult: 搜索结果
         """
         logger.info(t("console.graphSearch", graphId=graph_id, query=query[:50]))
+        # Zep Cloud rejects queries longer than 400 characters.  Keep the
+        # original query for the local fallback, but send a bounded query to
+        # the remote API so a noisy 400 does not add three retry delays to
+        # every report section.
+        remote_query = query[:400]
         
         # 尝试使用Zep Cloud Search API
         try:
             search_results = self._call_with_retry(
                 func=lambda: self.client.graph.search(
                     graph_id=graph_id,
-                    query=query,
+                    query=remote_query,
                     limit=limit,
                     scope=scope,
                     reranker="cross_encoder"
